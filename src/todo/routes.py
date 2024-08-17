@@ -3,28 +3,18 @@ from sqlalchemy.orm import session
 from typing import Annotated
 from starlette import status
 from src.todo.models import Todos
-from src.db.databases import SessionLocal
+from src.db.databases import get_db
 from src.auth.routes import get_current_user
 from src.todo.schemas import TodoRequest
 
-todo_router = APIRouter(
-    prefix="/todo",
-    tags=['todo']
-)
+todo_router = APIRouter()
 
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
-
-# dependancy        # 
+# dependancy
 db_dependancy = Annotated[session, Depends(get_db)]
 user_dependancy = Annotated[dict, Depends(get_current_user)]
 
 
-@todo_router.get("/", status_code=status.HTTP_200_OK)
+@todo_router.get("", status_code=status.HTTP_200_OK)
 async def read_all(user: user_dependancy,db: db_dependancy):
     if not user:
         raise HTTPException(status_code=401, detail='Authentication Failed')
@@ -39,7 +29,7 @@ async def read_todo(user: user_dependancy,db:db_dependancy, todo_id: int = Path(
         raise HTTPException(status_code=404, detail="Todo not found")
     return todo
 
-@todo_router.post("/", status_code=status.HTTP_201_CREATED)
+@todo_router.post("", status_code=status.HTTP_201_CREATED)
 async def create_todo(user: user_dependancy,db: db_dependancy, todo_request: TodoRequest):
     if not user:
         raise HTTPException(status_code=401, detail='Authentication Failed')

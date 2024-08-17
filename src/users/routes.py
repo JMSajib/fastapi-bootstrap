@@ -4,21 +4,12 @@ from sqlalchemy.orm import session
 from typing import Annotated
 from starlette import status
 from src.users.models import Users
-from src.db.databases import SessionLocal
+from src.db.databases import get_db
 from passlib.context import CryptContext
 from src.auth.routes import get_current_user
 
 user_router = APIRouter(
-    prefix="/users",
-    tags=['users']
 )
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
         
 db_dependancy = Annotated[session, Depends(get_db)]
 user_dependancy = Annotated[dict, Depends(get_current_user)]
@@ -29,7 +20,7 @@ class UserVerification(BaseModel):
     password: str
     new_password: str = Field(min_length=6)
 
-@user_router.get("/users", status_code=status.HTTP_200_OK)
+@user_router.get("", status_code=status.HTTP_200_OK)
 async def get_users(user: user_dependancy, db:db_dependancy):
     if not user:
         raise HTTPException(status_code=401, detail='Authentication Failed')

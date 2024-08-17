@@ -4,20 +4,10 @@ from sqlalchemy.orm import session
 from typing import Annotated
 from starlette import status
 from src.todo.models import Todos
-from src.db.databases import SessionLocal
+from src.db.databases import get_db
 from src.auth.routes import get_current_user
 
-admin_router = APIRouter(
-    prefix="/admin",
-    tags=['admin']
-)
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+admin_router = APIRouter()
         
 db_dependancy = Annotated[session, Depends(get_db)]
 user_dependancy = Annotated[dict, Depends(get_current_user)]

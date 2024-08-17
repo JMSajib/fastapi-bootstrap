@@ -1,7 +1,7 @@
 from datetime import datetime,timedelta,timezone
 from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException
-from src.db.databases import SessionLocal
+from src.db.databases import get_db
 from sqlalchemy.orm import session
 from src.users.models import Users
 from src.auth.schemas import UserRequest, Token
@@ -9,18 +9,9 @@ from passlib.context import CryptContext
 from starlette import status
 from fastapi.security import OAuth2PasswordRequestForm, OAuth2PasswordBearer
 from jose import jwt, JWTError
+from src.config import settings
 
-auth_router = APIRouter(
-    prefix="/auth",
-    tags=['auth']
-)
-
-def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+auth_router = APIRouter()
         
 db_dependancy = Annotated[session, Depends(get_db)]
 
@@ -28,8 +19,8 @@ bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
 oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
 
-SECRET_KEY = '9ecc4622712c6baaa9ec196135885a5208a5598890c8c119853979efd6f74fa0'
-ALGORITHM = 'HS256'
+SECRET_KEY = settings.SECRET_KEY
+ALGORITHM = settings.ALGORITHM
 
 
 def authenticated_user(username:str, password: str, db):
@@ -64,7 +55,7 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="UnAuthorized")
 
 
-@auth_router.post("/", status_code=status.HTTP_201_CREATED)
+@auth_router.post("", status_code=status.HTTP_201_CREATED)
 async def create_user(db:db_dependancy,create_user_request: UserRequest):
     create_user_model = Users(
         email=create_user_request.email,
