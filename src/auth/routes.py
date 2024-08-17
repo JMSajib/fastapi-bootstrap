@@ -17,7 +17,7 @@ db_dependancy = Annotated[session, Depends(get_db)]
 
 bcrypt_context = CryptContext(schemes=['bcrypt'], deprecated='auto')
 
-oauth2_bearer = OAuth2PasswordBearer(tokenUrl='auth/token')
+oauth2_bearer = OAuth2PasswordBearer(tokenUrl='/api/v1/auth/token')
 
 SECRET_KEY = settings.SECRET_KEY
 ALGORITHM = settings.ALGORITHM
@@ -41,19 +41,27 @@ def create_access_token(
     return jwt.encode(encode, SECRET_KEY, ALGORITHM)
 
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_bearer)]):
+async def get_current_user(
+    token: Annotated[str, Depends(oauth2_bearer)], db: db_dependancy
+):
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         username: str = payload.get('sub')
         user_id: int = payload.get('id')
         user_role: str = payload.get('role')
-        if username is None or user_id is None:
+        user = (
+            db.query(Users)
+            .filter(Users.id == user_id)
+            .filter(Users.username == username)
+            .filter(Users.role == user_role)
+            .first()
+        )
+        if not user:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED, detail="UnAuthorized"
             )
-        return {"id": user_id, "username": username, "user_role": user_role}
-    except JWTError as e:
-        print(e)
+        return user
+    except JWTError:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="UnAuthorized"
         )
