@@ -9,7 +9,7 @@ from src.users.routes import user_router
 app = FastAPI(
     title="Todo App",
     description="A REST API for Todo Application",
-    version=settings.API_VERSION
+    version=settings.API_VERSION,
 )
 # Base.metadata.create_all(bind=engine)
 

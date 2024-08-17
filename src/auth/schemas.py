@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+
 class UserRequest(BaseModel):
     username: str
     email: str
@@ -8,6 +9,7 @@ class UserRequest(BaseModel):
     password: str
     is_active: bool
     role: str
+
 
 class Token(BaseModel):
     access_token: str

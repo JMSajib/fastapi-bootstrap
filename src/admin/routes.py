@@ -1,5 +1,4 @@
 from fastapi import Depends, HTTPException, APIRouter, Path
-from pydantic import BaseModel, Field
 from sqlalchemy.orm import session
 from typing import Annotated
 from starlette import status
@@ -8,7 +7,7 @@ from src.db.databases import get_db
 from src.auth.routes import get_current_user
 
 admin_router = APIRouter()
-        
+
 db_dependancy = Annotated[session, Depends(get_db)]
 user_dependancy = Annotated[dict, Depends(get_current_user)]
 
@@ -19,8 +18,11 @@ async def read_all(user: user_dependancy, db: db_dependancy):
         raise HTTPException(status_code=401, detail='Authentication Failed')
     return db.query(Todos).all()
 
+
 @admin_router.delete("/todo/{todo_id}", status_code=status.HTTP_200_OK)
-async def delete_todo(user: user_dependancy, db:db_dependancy,todo_id: int = Path(gt=0)):
+async def delete_todo(
+    user: user_dependancy, db: db_dependancy, todo_id: int = Path(gt=0)
+):
     if not user or user.get('user_role') != 'admin':
         raise HTTPException(status_code=401, detail='Authentication Failed')
     todo_model = db.query(Todos).filter(Todos.id == todo_id).first()

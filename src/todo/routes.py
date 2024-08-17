@@ -15,22 +15,33 @@ user_dependancy = Annotated[dict, Depends(get_current_user)]
 
 
 @todo_router.get("", status_code=status.HTTP_200_OK)
-async def read_all(user: user_dependancy,db: db_dependancy):
+async def read_all(user: user_dependancy, db: db_dependancy):
     if not user:
         raise HTTPException(status_code=401, detail='Authentication Failed')
     return db.query(Todos).filter(Todos.owner_id == user.get('id')).all()
 
+
 @todo_router.get("/{todo_id}", status_code=status.HTTP_200_OK)
-async def read_todo(user: user_dependancy,db:db_dependancy, todo_id: int = Path(gt=0)):
+async def read_todo(
+    user: user_dependancy, db: db_dependancy, todo_id: int = Path(gt=0)
+):
     if not user:
         raise HTTPException(status_code=401, detail='Authentication Failed')
-    todo = db.query(Todos).filter(Todos.id == todo_id).filter(Todos.owner_id == user.get('id')).first()
+    todo = (
+        db.query(Todos)
+        .filter(Todos.id == todo_id)
+        .filter(Todos.owner_id == user.get('id'))
+        .first()
+    )
     if not todo:
         raise HTTPException(status_code=404, detail="Todo not found")
     return todo
 
+
 @todo_router.post("", status_code=status.HTTP_201_CREATED)
-async def create_todo(user: user_dependancy,db: db_dependancy, todo_request: TodoRequest):
+async def create_todo(
+    user: user_dependancy, db: db_dependancy, todo_request: TodoRequest
+):
     if not user:
         raise HTTPException(status_code=401, detail='Authentication Failed')
     todo_model = Todos(**todo_request.model_dump(), owner_id=user.get('id'))
@@ -40,10 +51,20 @@ async def create_todo(user: user_dependancy,db: db_dependancy, todo_request: Tod
 
 
 @todo_router.put('/{todo_id}', status_code=status.HTTP_200_OK)
-async def update_todo(user: user_dependancy,db: db_dependancy, todo_request: TodoRequest, todo_id: int = Path(gt=0)):
+async def update_todo(
+    user: user_dependancy,
+    db: db_dependancy,
+    todo_request: TodoRequest,
+    todo_id: int = Path(gt=0),
+):
     if not user:
         raise HTTPException(status_code=401, detail='Authentication Failed')
-    todo_model = db.query(Todos).filter(Todos.id == todo_id).filter(Todos.owner_id == user.get('id')).first()
+    todo_model = (
+        db.query(Todos)
+        .filter(Todos.id == todo_id)
+        .filter(Todos.owner_id == user.get('id'))
+        .first()
+    )
     if todo_model is None:
         raise HTTPException(status_code=404, detail="Todo not found")
     todo_model.title = todo_request.title
@@ -54,12 +75,22 @@ async def update_todo(user: user_dependancy,db: db_dependancy, todo_request: Tod
     db.add(todo_model)
     db.commit()
 
+
 @todo_router.delete("/{todo_id}", status_code=status.HTTP_200_OK)
-async def delete_todo(user: user_dependancy, db:db_dependancy,todo_id: int = Path(gt=0)):
+async def delete_todo(
+    user: user_dependancy, db: db_dependancy, todo_id: int = Path(gt=0)
+):
     if not user:
         raise HTTPException(status_code=401, detail='Authentication Failed')
-    todo_model = db.query(Todos).filter(Todos.id == todo_id).filter(Todos.owner_id == user.get('id')).first()
+    todo_model = (
+        db.query(Todos)
+        .filter(Todos.id == todo_id)
+        .filter(Todos.owner_id == user.get('id'))
+        .first()
+    )
     if not todo_model:
         raise HTTPException(status_code=404, detail="Todo not found")
-    db.query(Todos).filter(Todos.id == todo_id).filter(Todos.owner_id == user.get('id')).delete()
+    db.query(Todos).filter(Todos.id == todo_id).filter(
+        Todos.owner_id == user.get('id')
+    ).delete()
     db.commit()
